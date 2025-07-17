@@ -14,7 +14,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
       with:
-        ref: VERSION_CONTROL
+        ref: main
         fetch-depth: 1
         path: version_control
     - name: get version
@@ -133,18 +133,9 @@ jobs:
           EOF
           docker login --username=${{ secrets.DOCKER_USERNAME }} --password='${{ secrets.DOCKER_PASSWORD }}'
           if  test "$GOARCH" = "armv7" ;then
-            docker buildx build --no-cache --platform linux/arm/v7 --push -t pikuzheng/smartdns:ui-$GOARCH -f Dockerfile.unknown .
+            docker buildx build --no-cache --platform linux/arm/v7 --push -t universonic/smartdns:ui-$GOARCH -f Dockerfile.unknown .
           else
-            docker buildx build --no-cache --platform linux/$GOARCH --push -t pikuzheng/smartdns:ui-$GOARCH -f Dockerfile.unknown .
-          fi
-      - name: send to tencent cloud
-        continue-on-error: true
-        run: |
-          docker login ccr.ccs.tencentyun.com --username=${{ secrets.CCR_USERNAME }} --password='${{ secrets.CCR_PASSWORD }}'
-          if  test "$GOARCH" = "armv7" ;then
-            docker buildx build --no-cache --platform linux/arm/v7 --push -t pikuzheng/smartdns:ui-$GOARCH -f Dockerfile.unknown .
-          else
-            docker buildx build --no-cache --platform linux/$GOARCH --push -t pikuzheng/smartdns:ui-$GOARCH -f Dockerfile.unknown .
+            docker buildx build --no-cache --platform linux/$GOARCH --push -t universonic/smartdns:ui-$GOARCH -f Dockerfile.unknown .
           fi
       - name: release ipk
         run: |
@@ -161,10 +152,8 @@ jobs:
           echo ${{ github.sha }} >> release.txt
           echo "status=success" >> $GITHUB_OUTPUT
       - name: Upload firmware to release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         if: steps.tag.outputs.status == 'success'
-        env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN }}
         with:
           tag_name: ${{ steps.tag.outputs.release_tag }}
           body_path: release.txt
@@ -183,6 +172,4 @@ jobs:
       - name: create manifest
         run: |
           docker login --username=${{ secrets.DOCKER_USERNAME }} --password='${{ secrets.DOCKER_PASSWORD }}' && \
-          docker buildx imagetools create -t pikuzheng/smartdns:ui -t pikuzheng/smartdns:ui-${{needs.get-version.outputs.CUR_VERSION}} -t pikuzheng/smartdns:latest -t pikuzheng/smartdns:${{needs.get-version.outputs.CUR_VERSION}} pikuzheng/smartdns:ui-x86_64 pikuzheng/smartdns:ui-aarch64 pikuzheng/smartdns:ui-armv7
-          docker login ccr.ccs.tencentyun.com --username=${{ secrets.CCR_USERNAME }} --password='${{ secrets.CCR_PASSWORD }}' && \
-          docker buildx imagetools create -t pikuzheng/smartdns:ui -t pikuzheng/smartdns:ui-${{needs.get-version.outputs.CUR_VERSION}} -t pikuzheng/smartdns:latest -t pikuzheng/smartdns:${{needs.get-version.outputs.CUR_VERSION}} pikuzheng/smartdns:ui-x86_64 pikuzheng/smartdns:ui-aarch64 pikuzheng/smartdns:ui-armv7 || true
+          docker buildx imagetools create -t universonic/smartdns:ui -t universonic/smartdns:ui-${{needs.get-version.outputs.CUR_VERSION}} -t universonic/smartdns:latest -t universonic/smartdns:${{needs.get-version.outputs.CUR_VERSION}} universonic/smartdns:ui-x86_64 universonic/smartdns:ui-aarch64 universonic/smartdns:ui-armv7
